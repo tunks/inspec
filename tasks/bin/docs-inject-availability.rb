@@ -27,11 +27,11 @@ def process
         warn "Could not find preface section"
         next
       end
+      puts "    Injecting prior to #{cursor.to_plaintext.chomp} at line #{cursor.sourcepos[:start_line]}"
 
       frag = make_availability_section(project, release)
-      #md_doc.inject_fragment_before(frag, cursor)
-      # new_filename = md_filename.sub(/\.md/, '.new.md')
-      #md_doc.write(md_filename, WIDTH)
+      md_doc.linewise_inject_fragment_before(frag, cursor)
+      md_doc.write_via_lines(md_filename)
     end
   end
 end

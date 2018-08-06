@@ -119,7 +119,7 @@ module DocAnalyzer
       fragment_lines = fragment.split("\n")
 
       # Splice in new content
-      spliced_lines = content_lines[0, incision] + fragment_lines + content_lines[incision, -1]
+      spliced_lines = content_lines[0, incision] + fragment_lines + [""] + content_lines[incision..-1]
 
       # Join on newlines
       @spliced_content = spliced_lines.join("\n")
@@ -145,6 +145,12 @@ module DocAnalyzer
       metadata = match[1]
       rendered_markdown = doc.to_commonmark(:DEFAULT, width)
       File.write(path, metadata + "\n" + rendered_markdown)
+    end
+
+    # Write to a file, simply writing out the (spliced) lines.
+    # No linewrapping is attempted, nor is any re-rendering done.
+    def write_via_lines(path)
+      File.write(path, spliced_content)
     end
 
     private
