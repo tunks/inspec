@@ -40,11 +40,8 @@ group :tools do
   gem 'pry', '~> 0.10'
   gem 'rb-readline'
   gem 'license_finder'
-<<<<<<< HEAD
   gem 'git', '~> 1.4'
-=======
   gem 'commonmarker', '~> 0.17'
->>>>>>> Scan markdown for Availability section, and emit findings as YAML
 end
 
 # gems for Maintainers.md generation
