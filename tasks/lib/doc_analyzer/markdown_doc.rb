@@ -5,12 +5,13 @@ require 'commonmarker'
 module DocAnalyzer
   class MarkdownDoc
 
-    attr_reader :doc, :name, :orig_content
+    attr_reader :doc, :name, :orig_content, :spliced_content
 
     def initialize(path)
       @name = path.split('/').last.split('.').first
       @orig_content = File.read(path)
       @doc = CommonMarker.render_doc(orig_content)
+      @spliced_content = @orig_content
       scrub_metadata_garbage
     end
 
@@ -69,7 +70,13 @@ module DocAnalyzer
       lower_headers
     end
 
-    def inject_fragment_before(fragment, node)
+    # Given a chunk of Markdown as a String, and a Node in the current
+    # doc, parse the fragment and piece-by-piece inject the fragment into the
+    # CommonMark node tree prior to the provided node.
+    #
+    # @param [String] fragment - valid markdown text
+    # @param [CommonMarker::Node] cursor - Location before which to inject the fragment.
+    def noodetree_inject_fragment_before(fragment, node)
       doc_fragment = CommonMarker.render_doc(fragment)
       source_cursor = doc_fragment.last_child
       target_cursor = node
@@ -84,8 +91,48 @@ module DocAnalyzer
       end
     end
 
-    # We need a special write, because we insert non-md garbage metadata at the top of the file.
-    def write(path, width=0)
+    # Given a chunk of Markdown as a String, and a Node in the current
+    # doc, use the cursor node's source location to locate the
+    # cursor in the original file; then splice the fragment into the
+    # lines of the (unparsed) file.
+    #
+    # The newly spliced content is stored in @spliced_content.
+    #
+    # Using this and nodetree_inject_fragment_before will cause great gnashing of teeth.
+    #
+    # Calling this more than once will cause rending of garments.
+    #
+    # @param [String] fragment
+    # @param [CommonMarker::Node] cursor - Location before which to inject the fragment.
+    def linewise_inject_fragment_before(fragment, node)
+      # Determine the starting line number
+      incision = node.sourcepos[:start_line]
+
+      # TODO: Adjust for invalid metadata block at top of file
+      incision += 0
+
+      # Adjust for arrays (zero-based)
+      incision += -1
+
+      # Split on newlines
+      content_lines = spliced_content.split("\n")
+      fragment_lines = fragment.split("\n")
+
+      # Splice in new content
+      spliced_lines = content_lines[0, incision] + fragment_lines + content_lines[incision, -1]
+
+      # Join on newlines
+      @spliced_content = spliced_lines.join("\n")
+    end
+
+    # Write to a file path, by rendering the CommonMarker source tree into Markdown.
+    # This is a full re-render; whitespace will not be preserved.
+    # We need a special write, because we insert non-md garbage metadata at
+    # the top of the file.
+    #
+    # @param [String] path - filepath to write
+    # @param [FixNum] width - column at which to line wrap.  Default is 0, no wrapping.
+    def write_via_render(path, width=0)
       # ---
       # title: About the google_container_node_pool Resource
       # platform: gcp
