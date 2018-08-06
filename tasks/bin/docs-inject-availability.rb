@@ -1,14 +1,20 @@
-require_relative 'tasks/lib/doc_analyzer'
+require_relative '../lib/doc_analyzer'
 require 'byebug'
 
-WORKING_DIR = '.'
-REPO = 'inspec/inspec'
-WIDTH=0 # No forced line wrap
+# This is a one-off script to inject the Availability section into the core, Azure, and GCP docs.
+# To change which one, set env var INSPEC_DOC_AVAIL_INJECT to core, azure, or gcp.
+
+PROJECTS = {
+  core:  { working_dir:                    '.', repo: 'inspec/inspec',       line_wrap: 0 },
+  azure: { working_dir: 'contrib/inspec-azure', repo: 'inspec/inspec-azure', line_wrap: 90 },
+  gcp:   { working_dir: 'contrib/inspec-gcp',   repo: 'inspec/inspec-gcp',   line_wrap: 0 },
+}
 
 def process
-  release_lister = DocAnalyzer::ReleaseLister.new(REPO, WORKING_DIR)
+  project = (ENV['INSPEC_DOC_AVAIL_INJECT'] || 'core').to_sym
+  release_lister = DocAnalyzer::ReleaseLister.new(PROJECTS[project][:repo], PROJECTS[project][:working_dir])
 
-  Dir.chdir(WORKING_DIR) do
+  Dir.chdir(PROJECTS[project][:working_dir]) do
     Dir.glob(['docs/resources/*.md','docs/resources/*.md.erb']) do |md_filename|
       md_doc = DocAnalyzer::MarkdownDoc.new(md_filename)
       puts "  #{md_doc.name}:"
@@ -22,13 +28,25 @@ def process
         next
       end
 
-      frag = make_core_availability_section(release)
-      md_doc.inject_fragment_before(frag, cursor)
+      frag = make_availability_section(project, release)
+      #md_doc.inject_fragment_before(frag, cursor)
       # new_filename = md_filename.sub(/\.md/, '.new.md')
-      md_doc.write(md_filename, WIDTH)
+      #md_doc.write(md_filename, WIDTH)
     end
   end
 end
+
+def make_availability_section(project, release)
+  case project
+  when :azure
+    make_azure_availability_section(release)
+  when :core
+    make_core_availability_section(release)
+  when :gcp
+    make_gcp_availability_section(release)
+  end
+end
+
 
 def make_gcp_availability_section(release)
   md_str = <<~EOMD
@@ -102,4 +120,7 @@ def make_core_availability_section(release)
   md_str
 end
 
-process
+# Force chdir to project root, regardless of where this file is.
+Dir.chdir(File.join(File.dirname(__FILE__), '..', '..')) do
+  process
+end
