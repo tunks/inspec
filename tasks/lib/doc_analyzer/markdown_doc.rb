@@ -121,6 +121,9 @@ module DocAnalyzer
       # Splice in new content
       spliced_lines = content_lines[0, incision] + fragment_lines + [""] + content_lines[incision..-1]
 
+      # Ughhh, inconsistent ending newlines
+      spliced_lines << '' if orig_content[-1] == "\n"
+
       # Join on newlines
       @spliced_content = spliced_lines.join("\n")
     end
