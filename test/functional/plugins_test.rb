@@ -55,6 +55,7 @@ end
 # Should be able to install a gem-based plugin
 # Should be able to list plugins when none installed
 # Should be able to list plugins when some installed
+# Train plugins should be included in the list
 # Should be able to list core plugins as well
 # Should be able to uninstall a gem plugin
 # Uninstalling a nonexistant plugin is a code 2 error
@@ -65,7 +66,7 @@ end
 # Should be able to install a legacy "versionless" plugin
 # Should be able to install a v1 (converted legacy) plugin
 # Should be able to install a v2 CLI plugin
-# Should be able to install a v2 platform plugin
+# Should be able to install a train plugin
 
 # Should refuse to install gems that do not begin with train- or inspec-
 
@@ -77,6 +78,12 @@ end
 
 # Should be able to suggest a train transport plugin when a gem search is successful
 # Should raise an error if no train transport plugin exists
+
+#=========================================================================================#
+#                           Train plugins type
+#=========================================================================================#
+  # TODO: when a train plugin is installed, we can use it in the -b option
+  # TODO: when a train plugin is installed, we can use it in the -t option schema
 
 #=========================================================================================#
 #                           CliCommand plugin type
